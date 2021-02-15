@@ -5536,7 +5536,7 @@ loadAndProcessData().then(countries => {
         .domain(colorScale.domain().sort().reverse())
         .range(scheme[colorScale.domain().length]);
 
-    console.log(colorScale.domain());
+    console.log(countries.features.map(colorValue));
 
     colorLegendG.call(colorLegend, {
         colorScale,

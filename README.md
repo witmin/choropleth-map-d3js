@@ -3,6 +3,12 @@ The video tutorial on FreeCodeCamp.org made by Curran Kelleher: https://www.yout
 
 This repository used [rollup.js](https://rollupjs.org/) as the JavaScript module bundler. 
 
+## Demo
+![Choropleth Map](screenshot/choropleth-map.png)
+
+### Issue
+The legend contains an empty item which caused by to a 'undefined' colorScale domain data type which shouldn't be there. 
+
 ## View the outcome
 Open `public/index.html` in modern browser such as Chrome or Firefox directly. 
 
