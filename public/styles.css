@@ -7,15 +7,16 @@ body {
     margin: 0;
     overflow: hidden;
     background: white;
+    font-family: sans-serif;
 }
 
 .sphere {
-    fill: #2079cd;
+    fill: #69b7fd;
 }
 
 .country {
-    stroke: darkgreen;
-    stroke-opacity: 0.9;
+    stroke: black;
+    stroke-opacity: 0.3;
 }
 
 .country:hover {
@@ -25,3 +26,9 @@ body {
     stroke-opacity: 1;
 }
 
+text {
+    fill: #284b6b;
+    font-size: 0.75rem;
+    text-anchor: start;
+    text-transform: capitalize;
+}

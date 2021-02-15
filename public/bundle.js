@@ -1473,6 +1473,26 @@ function hsl2rgb(h, m1, m2) {
       : m1) * 255;
 }
 
+function basis(t1, v0, v1, v2, v3) {
+  var t2 = t1 * t1, t3 = t2 * t1;
+  return ((1 - 3 * t1 + 3 * t2 - t3) * v0
+      + (4 - 6 * t2 + 3 * t3) * v1
+      + (1 + 3 * t1 + 3 * t2 - 3 * t3) * v2
+      + t3 * v3) / 6;
+}
+
+function basis$1(values) {
+  var n = values.length - 1;
+  return function(t) {
+    var i = t <= 0 ? (t = 0) : t >= 1 ? (t = 1, n - 1) : Math.floor(t * n),
+        v1 = values[i],
+        v2 = values[i + 1],
+        v0 = i > 0 ? values[i - 1] : 2 * v1 - v2,
+        v3 = i < n - 1 ? values[i + 2] : 2 * v2 - v1;
+    return basis((t - i / n) * n, v0, v1, v2, v3);
+  };
+}
+
 var constant$1 = x => () => x;
 
 function linear(a, d) {
@@ -1519,6 +1539,34 @@ var interpolateRgb = (function rgbGamma(y) {
 
   return rgb$1;
 })(1);
+
+function rgbSpline(spline) {
+  return function(colors) {
+    var n = colors.length,
+        r = new Array(n),
+        g = new Array(n),
+        b = new Array(n),
+        i, color;
+    for (i = 0; i < n; ++i) {
+      color = rgb(colors[i]);
+      r[i] = color.r || 0;
+      g[i] = color.g || 0;
+      b[i] = color.b || 0;
+    }
+    r = spline(r);
+    g = spline(g);
+    b = spline(b);
+    color.opacity = 1;
+    return function(t) {
+      color.r = r(t);
+      color.g = g(t);
+      color.b = b(t);
+      return color + "";
+    };
+  };
+}
+
+var rgbBasis = rgbSpline(basis$1);
 
 function interpolateNumber(a, b) {
   return a = +a, b = +b, function(t) {
@@ -4715,6 +4763,82 @@ function geoNaturalEarth1() {
       .scale(175.295);
 }
 
+function initRange(domain, range) {
+  switch (arguments.length) {
+    case 0: break;
+    case 1: this.range(domain); break;
+    default: this.range(range).domain(domain); break;
+  }
+  return this;
+}
+
+const implicit = Symbol("implicit");
+
+function ordinal() {
+  var index = new Map(),
+      domain = [],
+      range = [],
+      unknown = implicit;
+
+  function scale(d) {
+    var key = d + "", i = index.get(key);
+    if (!i) {
+      if (unknown !== implicit) return unknown;
+      index.set(key, i = domain.push(d));
+    }
+    return range[(i - 1) % range.length];
+  }
+
+  scale.domain = function(_) {
+    if (!arguments.length) return domain.slice();
+    domain = [], index = new Map();
+    for (const value of _) {
+      const key = value + "";
+      if (index.has(key)) continue;
+      index.set(key, domain.push(value));
+    }
+    return scale;
+  };
+
+  scale.range = function(_) {
+    return arguments.length ? (range = Array.from(_), scale) : range.slice();
+  };
+
+  scale.unknown = function(_) {
+    return arguments.length ? (unknown = _, scale) : unknown;
+  };
+
+  scale.copy = function() {
+    return ordinal(domain, range).unknown(unknown);
+  };
+
+  initRange.apply(scale, arguments);
+
+  return scale;
+}
+
+function colors(specifier) {
+  var n = specifier.length / 6 | 0, colors = new Array(n), i = 0;
+  while (i < n) colors[i] = "#" + specifier.slice(i * 6, ++i * 6);
+  return colors;
+}
+
+var ramp = scheme => rgbBasis(scheme[scheme.length - 1]);
+
+var scheme = new Array(3).concat(
+  "fc8d59ffffbf99d594",
+  "d7191cfdae61abdda42b83ba",
+  "d7191cfdae61ffffbfabdda42b83ba",
+  "d53e4ffc8d59fee08be6f59899d5943288bd",
+  "d53e4ffc8d59fee08bffffbfe6f59899d5943288bd",
+  "d53e4ff46d43fdae61fee08be6f598abdda466c2a53288bd",
+  "d53e4ff46d43fdae61fee08bffffbfe6f598abdda466c2a53288bd",
+  "9e0142d53e4ff46d43fdae61fee08be6f598abdda466c2a53288bd5e4fa2",
+  "9e0142d53e4ff46d43fdae61fee08bffffbfe6f598abdda466c2a53288bd5e4fa2"
+).map(colors);
+
+ramp(scheme);
+
 var constant$2 = x => () => x;
 
 function ZoomEvent(type, {
@@ -5337,6 +5461,44 @@ const loadAndProcessData = () =>
             return countries;
         });
 
+const colorLegend = (selection, props) => {
+    const {colorScale, spacing, textOffset, circleRadius, backgroundRectWidth} = props;
+
+    const backgroundRect = selection.selectAll('rect')
+        .data([null]);
+
+    backgroundRect.enter().append('rect')
+        .merge(backgroundRect)
+        .attr('x', -circleRadius * 2)
+        .attr('y', -circleRadius * 2)
+        .attr('rx', circleRadius * 2)
+        .attr('width', backgroundRectWidth + circleRadius)
+        .attr('height', spacing * colorScale.domain().length + circleRadius * 2)
+        .attr('fill', 'white')
+        .attr('opacity', 0.8);
+
+    const groups = selection.selectAll('.tick')
+        .data(colorScale.domain());
+    const groupEnter = groups.enter().append('g');
+    groupEnter.merge(groups)
+        .attr('transform', (d, i) => `translate(0, ${i * spacing})`);
+
+    groups.exit().remove();
+
+    // Enter & Update
+    groupEnter.append('circle')
+        .merge(groups.select('circle'))
+        .attr('r', circleRadius)
+        .attr('fill', colorScale);
+
+    groupEnter.append('text')
+        .attr('x', textOffset)
+        .attr('dy', '0.32em')
+        .merge(groups.select('text'))
+        .text(d => d);
+
+};
+
 const width = document.body.clientWidth;
 const height = document.body.clientHeight;
 
@@ -5352,6 +5514,9 @@ const pathGenerator = geoPath().projection(projection$1);
 
 const g = svg.append('g');
 
+const colorLegendG = svg.append('g')
+    .attr('transform', `translate(40, 280)`);
+
 g.append('path')
     .attr('class', 'sphere')
     .attr('d', pathGenerator({type: 'Sphere'}));
@@ -5360,12 +5525,32 @@ svg.call(zoom().on('zoom', (event) => {
     g.attr('transform', event.transform);
 }));
 
+
+
+const colorScale = ordinal();
+const colorValue = d => d.properties.economy;
+
 loadAndProcessData().then(countries => {
+    colorScale
+        .domain(countries.features.map(colorValue))
+        .domain(colorScale.domain().sort().reverse())
+        .range(scheme[colorScale.domain().length]);
+
+    console.log(colorScale.domain());
+
+    colorLegendG.call(colorLegend, {
+        colorScale,
+        spacing: 24,
+        textOffset: 20,
+        circleRadius: 10,
+        backgroundRectWidth: 200
+    });
+
     g.selectAll('path').data(countries.features)
         .enter().append('path')
         .attr('class', 'country')
         .attr('d', pathGenerator)
-        .attr('fill', '#63d263')
+        .attr('fill', d => colorScale(colorValue(d)))
         .append('title')
-        .text(d => d.properties.name);
+        .text(d => d.properties.name + ': ' + colorValue(d));
 });
