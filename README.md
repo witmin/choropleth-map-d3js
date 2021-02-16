@@ -8,13 +8,10 @@ This repository used [rollup.js](https://rollupjs.org/) as the JavaScript module
 https://vizhub.com/curran/5c907e49d0294538aad03ad1f41e1e28?edit=files&file=index.js&mode=mini
 
 ## Demo
-### Static Map
-![Choropleth Map](screenshot/choropleth-map.png)
-### Interactive Map 
 ![Interactive Map](screenshot/interactiveChoroplethMap.gif)
 
 ### Issue
-The legend contains an empty item which caused by to a 'undefined' colorScale domain data type which shouldn't be there. 
+The legend contains an emp`ty item which caused by to a 'undefined' colorScale domain data type which shouldn't be there. 
 
 ## View the outcome
 Open `public/index.html` in modern browser such as Chrome or Firefox directly. 
