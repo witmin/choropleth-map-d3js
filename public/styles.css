@@ -19,6 +19,11 @@ body {
     stroke-opacity: 0.3;
 }
 
+.country.highlighted {
+    stroke-width: 1px;
+    stroke-opacity: 0.5;
+}
+
 .country:hover {
     fill: hotpink;
     stroke: deeppink;

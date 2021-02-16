@@ -26,7 +26,6 @@ let features;
 const onClick = (event, d) => {
     selectedColorValue = d;
     console.log(selectedColorValue);
-    console.log(event);
     render();
 };
 
@@ -55,6 +54,7 @@ const render = () => {
     choroplethMapG.call(choroplethMap, {
         features,
         colorScale,
-        colorValue
+        colorValue,
+        selectedColorValue
     });
 }

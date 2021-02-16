@@ -5526,18 +5526,20 @@ const choroplethMap = (selection, props) => {
     const {
         features,
         colorScale,
-        colorValue
+        colorValue,
+        selectedColorValue
     } = props;
-
-    console.log(features);
 
     const gUpdate = selection.selectAll('g').data([null]);
     const gEnter = gUpdate.enter().append('g');
     const g = gUpdate.merge(gEnter);
 
-    gEnter.append('path')
+    gEnter
+        .append('path')
         .attr('class', 'sphere')
-        .attr('d', pathGenerator({type: 'Sphere'}));
+        .attr('d', pathGenerator({type: 'Sphere'}))
+        .merge(gUpdate.select('.sphere'))
+        .attr('opacity', selectedColorValue ? 0.2 : 1);
 
     selection.call(zoom().on('zoom', (event) => {
         g.attr('transform', event.transform);
@@ -5546,15 +5548,21 @@ const choroplethMap = (selection, props) => {
     const countryPaths = g.selectAll('.country').data(features);
     const countryPathsEnter = countryPaths
         .enter().append('path')
-        .attr('class', 'country')
-        .attr('d', pathGenerator)
-        .attr('fill', d => colorScale(colorValue(d)));
+        .attr('class', 'country');
 
     countryPaths
-        .merge(countryPathsEnter);
+        .merge(countryPathsEnter)
+        .attr('d', pathGenerator)
+        .attr('fill', d => colorScale(colorValue(d)))
+        .attr('opacity', d =>
+            (!selectedColorValue || selectedColorValue === colorValue(d))
+                ? 1
+                : 0.2
+        )
+        .classed('highlighted', d=>
+            selectedColorValue && selectedColorValue === colorValue(d));
 
-    countryPathsEnter
-        .append('title')
+    countryPathsEnter.append('title')
         .text(d => d.properties.name + ': ' + colorValue(d));
 };
 
@@ -5581,7 +5589,6 @@ let features;
 const onClick = (event, d) => {
     selectedColorValue = d;
     console.log(selectedColorValue);
-    console.log(event);
     render();
 };
 
@@ -5610,6 +5617,7 @@ const render = () => {
     choroplethMapG.call(choroplethMap, {
         features,
         colorScale,
-        colorValue
+        colorValue,
+        selectedColorValue
     });
 };
