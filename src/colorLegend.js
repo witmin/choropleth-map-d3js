@@ -34,7 +34,7 @@ export const colorLegend = (selection, props) => {
         .attr('opacity', (d, i) =>
             (!selectedColorValue || d === selectedColorValue) ? 1 : 0.2
         )
-        .on('click', d => onClick(
+        .on('click', (event, d) => onClick(event,
             d === selectedColorValue
                 ? null
                 : d

@@ -3,6 +3,10 @@ The video tutorial on FreeCodeCamp.org made by Curran Kelleher: https://www.yout
 
 This repository used [rollup.js](https://rollupjs.org/) as the JavaScript module bundler. 
 
+
+# Interactive Choropleth Map source code
+https://vizhub.com/curran/5c907e49d0294538aad03ad1f41e1e28?edit=files&file=index.js&mode=mini
+
 ## Demo
 ![Choropleth Map](screenshot/choropleth-map.png)
 
